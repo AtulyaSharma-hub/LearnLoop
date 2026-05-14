@@ -50,6 +50,12 @@ function Navbar() {
 >
   Doubt Feed
 </Link>
+<Link
+  to="/ai"
+  className="text-gray-700 hover:text-blue-700 font-medium"
+>
+  AI Assistant
+</Link>
       </div>
 
     </nav>

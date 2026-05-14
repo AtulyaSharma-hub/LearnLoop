@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import DoubtFeed from "./pages/DoubtFeed";
+import AIAssistant from "./pages/AIAssistant";
 
 function App() {
   return (
@@ -20,6 +21,10 @@ function App() {
          <Route path="/ask" element={<AskDoubt />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/feed" element={<DoubtFeed />} />
+        <Route
+  path="/ai"
+  element={<AIAssistant />}
+/>
       </Routes>
 
     </BrowserRouter>

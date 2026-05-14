@@ -21,7 +21,9 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/doubts",
   require("./routes/doubtRoutes")
 );
-
+app.use("/api/ai",
+  require("./routes/aiRoutes")
+);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
