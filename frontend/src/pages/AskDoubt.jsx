@@ -1,40 +1,47 @@
 import Navbar from "../components/Navbar";
 import { useState } from "react";
+import axios from "axios";
+
 function AskDoubt() {
     const [title, setTitle] = useState("");
 const [subject, setSubject] = useState("");
 const [topic, setTopic] = useState("");
 const [description, setDescription] = useState("");
-   const handleSubmit = (e) => {
+
+ const handleSubmit = async (e) => {
 
   e.preventDefault();
 
   if (!title || !subject || !topic || !description) {
+
     alert("Please fill all fields");
     return;
   }
-   const newDoubt = {
-  title,
-  subject,
-  topic,
-  description,
-  urgency: "Medium"
-};
 
-const existingDoubts =
-  JSON.parse(localStorage.getItem("doubts")) || [];
+  try {
 
-existingDoubts.push(newDoubt);
+    await axios.post(
+      "http://localhost:5000/api/doubts",
+      {
+        title,
+        subject,
+        topic,
+        description,
+        urgency: "Medium"
+      }
+    );
 
-localStorage.setItem(
-  "doubts",
-  JSON.stringify(existingDoubts)
-);
-  alert("Doubt Submitted Successfully!");
-  setTitle("");
-setSubject("");
-setTopic("");
-setDescription("");
+    alert("Doubt Submitted Successfully!");
+
+    setTitle("");
+    setSubject("");
+    setTopic("");
+    setDescription("");
+
+  } catch (error) {
+
+    alert("Failed to submit doubt");
+  }
 };
   return (
     <>

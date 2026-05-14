@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import DoubtCard from "../components/DoubtCard";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 function DoubtFeed() {
 
@@ -12,18 +13,22 @@ useEffect(() => {
 
   setDoubts(storedDoubts);
 }, []);
-const refreshDoubts = () => {
+const refreshDoubts = async () => {
 
-  const storedDoubts =
-    JSON.parse(localStorage.getItem("doubts")) || [];
+  try {
 
-  setDoubts(storedDoubts);
+    const response =
+      await axios.get(
+        "http://localhost:5000/api/doubts"
+      );
+
+    setDoubts(response.data);
+
+  } catch (error) {
+
+    console.log(error);
+  }
 };
-useEffect(() => {
-
-  refreshDoubts();
-
-}, []);
   return (
     <>
       <Navbar />
@@ -49,6 +54,7 @@ useEffect(() => {
           {doubts.map((doubt, index) => (
             <DoubtCard
               key={index}
+              _id={doubt._id}
               index={index}
               title={doubt.title}
               subject={doubt.subject}

@@ -1,39 +1,56 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
 function Login() {
   const navigate = useNavigate();
 
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
 
-const handleLogin = (e) => {
+const handleLogin = async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!email || !password) {
-      alert("Please fill all fields");
-      return;
-    }
-    const users =
-  JSON.parse(localStorage.getItem("users")) || [];
+  if (!email || !password) {
 
-const matchedUser = users.find(
-  (user) =>
-    user.email === email &&
-    user.password === password
-);
+    alert("Please fill all fields");
+    return;
+  }
 
-if (!matchedUser) {
-  alert("Invalid Credentials");
-  return;
-}
-    alert("Login Successful!");
+  try {
+
+    const response =
+      await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email,
+          password
+        }
+      );
+
     localStorage.setItem(
-  "loggedInUser",
-  JSON.stringify(matchedUser)
-);
+      "token",
+      response.data.token
+    );
+
+    localStorage.setItem(
+      "loggedInUser",
+      JSON.stringify(response.data.user)
+    );
+
+    alert("Login Successful!");
+
     navigate("/dashboard");
-  };
+
+  } catch (error) {
+
+    alert(
+      error.response?.data?.message ||
+      "Login Failed"
+    );
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50">

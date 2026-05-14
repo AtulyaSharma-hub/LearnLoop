@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Register() {
   const navigate = useNavigate();
@@ -8,36 +9,38 @@ const [name, setName] = useState("");
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
 
-const handleRegister = (e) => {
+const handleRegister = async (e) => {
 
   e.preventDefault();
 
   if (!name || !email || !password) {
+
     alert("Please fill all fields");
     return;
   }
-  const newUser = {
-  name,
-  email,
-  password,
-  credits: 0,
-  role: "student",
-  sessionsCompleted: 0,
-reputation: 5.0
-};
 
-const existingUsers =
-  JSON.parse(localStorage.getItem("users")) || [];
+  try {
 
-existingUsers.push(newUser);
+    await axios.post(
+      "http://localhost:5000/api/auth/register",
+      {
+        name,
+        email,
+        password
+      }
+    );
 
-localStorage.setItem(
-  "users",
-  JSON.stringify(existingUsers)
-);
-  alert("Registration Successful!");
+    alert("Registration Successful!");
 
-  navigate("/login");
+    navigate("/login");
+
+  } catch (error) {
+
+    alert(
+      error.response?.data?.message ||
+      "Registration Failed"
+    );
+  }
 };
   return (
     <div className="min-h-screen flex items-center justify-center bg-purple-50">

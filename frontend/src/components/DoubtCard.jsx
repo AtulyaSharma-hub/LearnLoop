@@ -1,3 +1,5 @@
+import axios from "axios";
+
 function DoubtCard({
   title,
   subject,
@@ -52,23 +54,23 @@ function DoubtCard({
     );
   };
 
-  const handleClear = () => {
+  const handleClear = async () => {
 
-    const doubts =
-      JSON.parse(localStorage.getItem("doubts")) || [];
+  try {
 
-     const updatedDoubts =
-    doubts.filter((_, i) => i !== index);
-
-    localStorage.setItem(
-      "doubts",
-      JSON.stringify(updatedDoubts)
+    await axios.delete(
+      `http://localhost:5000/api/doubts/${_id}`
     );
 
     refreshDoubts();
 
-    alert("Doubt Cleared Successfully!");
-  };
+    alert("Doubt Cleared!");
+
+  } catch (error) {
+
+    alert("Failed to clear doubt");
+  }
+};
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition">
