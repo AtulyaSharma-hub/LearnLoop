@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const helpRoutes =
+  require("./routes/helpRoutes");
 
 const connectDB = require("./config/db");
 
@@ -10,7 +12,13 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+
+  origin: "http://localhost:5173",
+
+  credentials: true
+
+}));
 app.use(express.json());
 
 
@@ -24,6 +32,22 @@ app.use("/api/doubts",
 app.use("/api/ai",
   require("./routes/aiRoutes")
 );
+app.use("/api/help", helpRoutes);
+app.use(
+  "/uploads",
+  express.static("uploads")
+);
+
+app.use((err, req, res, next) => {
+
+  console.log(err.stack);
+
+  res.status(500).json({
+
+    message: "Server Error"
+
+  });
+});
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

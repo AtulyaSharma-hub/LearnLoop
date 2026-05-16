@@ -22,7 +22,9 @@ const getDoubts = async (req, res) => {
   try {
 
     const doubts =
-      await Doubt.find();
+  await Doubt.find().sort({
+    createdAt: -1
+  });
 
     res.json(doubts);
 

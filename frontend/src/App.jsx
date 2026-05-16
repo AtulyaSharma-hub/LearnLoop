@@ -1,30 +1,60 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AskDoubt from "./pages/AskDoubt";
+import {
+  BrowserRouter,
+  Routes,
+  Route
+} from "react-router-dom";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import AskDoubt from "./pages/AskDoubt";
 import DoubtFeed from "./pages/DoubtFeed";
 import AIAssistant from "./pages/AIAssistant";
 
 function App() {
+
   return (
+
     <BrowserRouter>
 
       <Routes>
 
-        <Route path="/" element={<Home />} />
-
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/register" element={<Register />} />
-         <Route path="/ask" element={<AskDoubt />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/feed" element={<DoubtFeed />} />
         <Route
-  path="/ai"
-  element={<AIAssistant />}
-/>
+          path="/"
+          element={<Home />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
+
+        <Route
+          path="/ask"
+          element={<AskDoubt />}
+        />
+
+        <Route
+          path="/feed"
+          element={<DoubtFeed />}
+        />
+
+        <Route
+          path="/ai"
+          element={<AIAssistant />}
+        />
+
       </Routes>
 
     </BrowserRouter>

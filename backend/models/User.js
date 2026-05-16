@@ -31,9 +31,19 @@ const userSchema = new mongoose.Schema({
   sessionsCompleted: {
     type: Number,
     default: 0
-  }
+  },
+  role: {
+  type: String,
+  enum: ["Student", "Teacher", "Both"],
+  default: "Student"
+}
 
-});
+} ,{
+
+  timestamps: true
+
+}
+);
 
 module.exports =
   mongoose.model("User", userSchema);

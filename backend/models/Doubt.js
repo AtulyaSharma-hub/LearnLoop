@@ -27,15 +27,35 @@ const doubtSchema = new mongoose.Schema({
     default: "Medium"
   },
 
-  solved: {
-    type: Boolean,
-    default: false
-  },
+  helpType: {
+  type: String,
+  enum: ["text", "image", "video"],
+  default: null
+},
 
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+helpContent: {
+  type: String,
+  default: ""
+},
+
+mentorName: {
+  type: String,
+  default: ""
+},
+
+creditsAwarded: {
+  type: Number,
+  default: 0
+},
+
+resolved: {
+  type: Boolean,
+  default: false
+}
+
+}, {
+
+  timestamps: true
 
 });
 

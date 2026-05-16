@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 
 const registerUser = async (req, res) => {
 
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body;
 
   try {
 
@@ -20,13 +20,23 @@ const registerUser = async (req, res) => {
     const hashedPassword =
       await bcrypt.hash(password, 10);
 
-    const user = await User.create({
+   const user = await User.create({
 
-      name,
-      email,
-      password: hashedPassword
+  name,
 
-    });
+  email,
+
+  password: hashedPassword,
+
+  role,
+
+  credits: 0,
+
+  sessionsCompleted: 0,
+
+  reputation: 5
+
+});
 
     res.status(201).json({
       message: "User Registered"
@@ -77,12 +87,26 @@ const loginUser = async (req, res) => {
 
       token,
 
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        credits: user.credits
-      }
+    user: {
+
+  id: user._id,
+
+  name: user.name,
+
+  email: user.email,
+
+  role: user.role,
+
+  credits:
+    user.credits || 0,
+
+  sessionsCompleted:
+    user.sessionsCompleted || 0,
+
+  reputation:
+    user.reputation || 5
+
+}
 
     });
 
