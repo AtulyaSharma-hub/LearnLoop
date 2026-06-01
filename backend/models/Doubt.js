@@ -27,6 +27,11 @@ const doubtSchema = new mongoose.Schema({
     default: "Medium"
   },
 
+  studentName: {
+    type: String,
+    default: ""
+  },
+
   helpType: {
   type: String,
   enum: ["text", "image", "video"],
@@ -51,6 +56,21 @@ creditsAwarded: {
 resolved: {
   type: Boolean,
   default: false
+},
+responseType: {
+  type: String,
+  enum: ["text", "image", "video"],
+  default: "text"
+},
+
+responseContent: {
+  type: String,
+  default: ""
+},
+
+resolvedAt: {
+  type: Date,
+  default: null
 }
 
 }, {

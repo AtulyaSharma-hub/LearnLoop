@@ -8,6 +8,17 @@ import {
 
 import axios from "axios";
 
+const URGENCY_RANK = { High: 3, Medium: 2, Low: 1 };
+
+function sortDoubtsByUrgency(doubts) {
+  return [...doubts].sort((a, b) => {
+    const urgencyDiff =
+      (URGENCY_RANK[b.urgency] ?? 2) - (URGENCY_RANK[a.urgency] ?? 2);
+    if (urgencyDiff !== 0) return urgencyDiff;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+}
+
 function DoubtFeed() {
 
   const [doubts, setDoubts] = useState([]);
@@ -21,7 +32,7 @@ function DoubtFeed() {
         "http://localhost:5000/api/doubts"
       );
 
-      setDoubts(response.data);
+      setDoubts(sortDoubtsByUrgency(response.data));
 
     } catch (error) {
 
@@ -170,7 +181,8 @@ function DoubtFeed() {
                       subject={doubt.subject}
                       urgency={doubt.urgency}
                       description={doubt.description}
-                      refreshDoubts={handleDoubtCleared}
+                      studentName={doubt.studentName}
+                      refreshDoubts={refreshDoubts}
                     />
 
                   </div>

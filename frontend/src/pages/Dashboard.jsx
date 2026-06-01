@@ -60,7 +60,7 @@ function Dashboard() {
             <div>
 
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-sm text-blue-200 mb-6">
-                AI Powered Student Workspace
+                LearnLoop Student Workspace
               </div>
 
               <h1 className="text-5xl md:text-6xl font-black leading-tight">

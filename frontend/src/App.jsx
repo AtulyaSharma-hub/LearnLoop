@@ -10,7 +10,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AskDoubt from "./pages/AskDoubt";
 import DoubtFeed from "./pages/DoubtFeed";
-import AIAssistant from "./pages/AIAssistant";
+import ResolvedDoubts
+from "./pages/ResolvedDoubts";
 
 function App() {
 
@@ -44,15 +45,13 @@ function App() {
           path="/ask"
           element={<AskDoubt />}
         />
-
+        <Route
+    path="/resolved"
+    element={<ResolvedDoubts />}/>
+    
         <Route
           path="/feed"
           element={<DoubtFeed />}
-        />
-
-        <Route
-          path="/ai"
-          element={<AIAssistant />}
         />
 
       </Routes>

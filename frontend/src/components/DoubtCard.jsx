@@ -8,6 +8,7 @@ function DoubtCard({
   subject,
   urgency,
   description,
+  studentName,
 
   refreshDoubts
 
@@ -17,32 +18,49 @@ function DoubtCard({
   const [helpType, setHelpType] = useState("");
   const [textHelp, setTextHelp] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [response,setResponse] = useState("");
 
-  const removeDoubt = async () => {
+  const handleResolve =
+async () => {
 
-    try {
+  try {
 
-      await axios.delete(
+    if (!response.trim()) {
 
-        `http://localhost:5000/api/doubts/${_id}`
-
+      alert(
+        "Please enter a response"
       );
 
-      refreshDoubts();
+      return;
 
-    } catch (error) {
-
-      console.log(error);
-
-      alert("Failed to remove doubt");
     }
-  };
 
-  // Prevent client-side stat mutation — backend is authoritative.
-  const handleHelp = async () => {
-    await removeDoubt();
-  };
+    await axios.put(
 
+      `http://localhost:5000/api/doubts/resolve/${_id}`,
+
+      {
+        teacherResponse:
+          response
+      }
+
+    );
+
+    refreshDoubts();
+
+    alert(
+      "Doubt Resolved"
+    );
+
+  } catch (error) {
+
+    alert(
+      "Resolution Failed"
+    );
+
+  }
+
+};
   const submitHelp = async () => {
     if (!helpType) {
       alert("Please choose a mentorship method.");
@@ -84,9 +102,15 @@ function DoubtCard({
 
     const formData = new FormData();
     formData.append("helpType", helpType);
-    formData.append("textHelp", textHelp);
+    formData.append("responseType", helpType);
     formData.append("mentorId", currentUser.id || currentUser._id);
     formData.append("mentorName", currentUser.name || "");
+
+    if (helpType === "text") {
+      formData.append("textHelp", textHelp);
+      formData.append("responseContent", textHelp);
+    }
+
     if (selectedFile) {
       formData.append("file", selectedFile);
     }
@@ -118,8 +142,7 @@ function DoubtCard({
         localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
       }
 
-      // Server has already updated the mentor's stats; remove doubt and show confirmation.
-      await removeDoubt();
+      refreshDoubts();
       alert(`You helped the student with ${methodLabel} and earned ${creditGain} credits!`);
       setShowHelpModal(false);
       setHelpType("");
@@ -135,10 +158,17 @@ function DoubtCard({
   };
 
   const handleClear = async () => {
-
-    alert("Doubt Cleared!");
-
-    await removeDoubt();
+    try {
+      await axios.put(`http://localhost:5000/api/doubts/clear/${_id}`, {
+        responseType: "text",
+        responseContent: "Marked as resolved without a detailed response."
+      });
+      refreshDoubts();
+      alert("Doubt Cleared!");
+    } catch (error) {
+      console.log(error);
+      alert("Failed to clear doubt");
+    }
   };
 
   /* Urgency Styling */
@@ -186,6 +216,12 @@ function DoubtCard({
             <div className="px-4 py-2 rounded-full bg-purple-500/20 text-purple-300 text-sm border border-purple-400/20">
               🤝 Peer Collaboration
             </div>
+
+            {studentName && (
+              <div className="px-4 py-2 rounded-full bg-amber-500/20 text-amber-200 text-sm border border-amber-400/20">
+                👤 Asked by {studentName}
+              </div>
+            )}
 
           </div>
 

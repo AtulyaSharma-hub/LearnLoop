@@ -1,0 +1,456 @@
+================================================================================
+                         LEARNLOOP PROJECT DOCUMENTATION
+          Peer-to-Peer Knowledge Exchange Ecosystem — How Everything Works
+================================================================================
+
+Last updated: reflects current codebase structure and behavior.
+
+
+--------------------------------------------------------------------------------
+1. WHAT IS LEARNLOOP?
+--------------------------------------------------------------------------------
+
+LearnLoop is a full-stack web application where students post academic doubts,
+teachers/mentors help resolve them, and everyone earns knowledge credits for
+participation. Doubts are never permanently deleted from MongoDB — they are
+marked resolved and moved out of the active feed into a resolved archive.
+
+Core idea:
+  Student asks doubt  →  appears in Active Doubt Feed
+  Teacher helps       →  doubt becomes resolved (stays in database)
+  Student reviews     →  Resolved Doubts page shows answer + media
+
+
+--------------------------------------------------------------------------------
+2. TECH STACK
+--------------------------------------------------------------------------------
+
+FRONTEND (folder: frontend/)
+  - React 19 + Vite
+  - React Router (client-side routing)
+  - Tailwind CSS v4 (via @tailwindcss/vite)
+  - Axios (HTTP calls to backend)
+  - Runs on: http://localhost:5173
+
+BACKEND (folder: backend/)
+  - Node.js + Express 5
+  - MongoDB Atlas + Mongoose (ODM)
+  - JWT + bcryptjs (auth)
+  - Multer (image/video uploads)
+  - OpenAI API (optional /ai route — UI link removed)
+  - Runs on: http://localhost:5000
+
+DATABASE
+  - MongoDB collections: users, doubts
+  - Connection string: process.env.MONGO_URI in backend/.env
+
+
+--------------------------------------------------------------------------------
+3. PROJECT FOLDER STRUCTURE
+--------------------------------------------------------------------------------
+
+LearnLoop/
+├── backend/
+│   ├── server.js              Entry point — mounts routes, CORS, static uploads
+│   ├── config/db.js           MongoDB connection
+│   ├── models/
+│   │   ├── User.js            User schema (auth, credits, role)
+│   │   └── Doubt.js           Doubt schema (question + resolution fields)
+│   ├── controllers/
+│   │   ├── authController.js  Register + login logic
+│   │   └── doubtController.js Create, list, clear, resolve doubts
+│   ├── routes/
+│   │   ├── authRoutes.js      /api/auth/*
+│   │   ├── doubtRoutes.js     /api/doubts/*
+│   │   ├── helpRoutes.js      /api/help/*  (Help Student flow)
+│   │   └── aiRoutes.js        /api/ai/*    (OpenAI — not linked in UI)
+│   ├── middleware/upload.js   Multer disk storage for images/videos
+│   └── uploads/               Saved files (images/, videos/)
+│
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx            Route definitions
+│   │   ├── main.jsx           React entry
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx     Navigation + role-based links
+│   │   │   └── DoubtCard.jsx  Single doubt card + Help Student modal
+│   │   └── pages/
+│   │       ├── Home.jsx       Landing page
+│   │       ├── Login.jsx      Login
+│   │       ├── Register.jsx   Sign up
+│   │       ├── Dashboard.jsx  User stats + recent active doubts
+│   │       ├── AskDoubt.jsx   Student submits a doubt
+│   │       ├── DoubtFeed.jsx  Active doubts for mentors (teachers)
+│   │       └── ResolvedDoubts.jsx  Archive of resolved doubts + solutions
+│   └── index.html
+│
+└── docs/
+    └── learnloop.txt          This file
+
+
+--------------------------------------------------------------------------------
+4. HOW TO RUN THE PROJECT
+--------------------------------------------------------------------------------
+
+BACKEND:
+  1. cd backend
+  2. npm install
+  3. Create .env with:
+       MONGO_URI=<your MongoDB Atlas connection string>
+       JWT_SECRET=<any secure random string>
+       OPENAI_API_KEY=<optional, only for /api/ai>
+       PORT=5000
+  4. npm run dev   (or npm start)
+
+FRONTEND:
+  1. cd frontend
+  2. npm install
+  3. npm run dev
+  4. Open http://localhost:5173
+
+CORS is configured so only http://localhost:5173 can call the API.
+
+
+--------------------------------------------------------------------------------
+5. FRONTEND ROUTES AND PAGES
+--------------------------------------------------------------------------------
+
+Path              Page                 Who uses it
+----              ----                 -------------
+/                 Home                 Everyone
+/login            Login                Guests
+/register         Register             Guests
+/dashboard        Dashboard            Logged-in users (stats + doubt preview)
+/ask              Ask Doubt            Students (role !== "Teacher" in navbar)
+/feed             Doubt Feed           Teachers (role !== "Student" in navbar)
+/resolved         Resolved Doubts      Everyone
+
+Navbar behavior (Navbar.jsx):
+  - Reads loggedInUser from localStorage
+  - Hides "Doubt Feed" if role is Student
+  - Hides "Ask Doubt" if role is Teacher
+  - AI Assistant link was removed from navbar; /ai route removed from App.jsx
+  - Logout clears token + loggedInUser, redirects to /login
+
+
+--------------------------------------------------------------------------------
+6. AUTHENTICATION — HOW FRONTEND AND BACKEND WORK TOGETHER
+--------------------------------------------------------------------------------
+
+REGISTER FLOW:
+  Frontend (Register.jsx)
+    → POST http://localhost:5000/api/auth/register
+    → Body: { name, email, password, role }
+  Backend (authController.registerUser)
+    → Checks email not taken
+    → Hashes password with bcrypt (10 rounds)
+    → Creates User with credits=0, reputation=5, sessionsCompleted=0
+    → role: "Student" | "Teacher" | "Both"
+
+LOGIN FLOW:
+  Frontend (Login.jsx)
+    → POST http://localhost:5000/api/auth/login
+    → Body: { email, password }
+  Backend (authController.loginUser)
+    → Validates password
+    → Returns JWT token + user object (id, name, email, role, credits, etc.)
+  Frontend stores in localStorage:
+    - token
+    - loggedInUser (JSON string of user profile)
+
+IMPORTANT:
+  - Doubt and help API routes do NOT use JWT middleware today.
+  - The app trusts client-sent mentorId and studentName from localStorage.
+  - After helping a student, DoubtCard updates loggedInUser credits in
+    localStorage from the API response.
+
+
+--------------------------------------------------------------------------------
+7. USER MODEL (MongoDB — users collection)
+--------------------------------------------------------------------------------
+
+Field               Type        Purpose
+-----               ----        -------
+name                String      Display name
+email               String      Unique login
+password            String      Bcrypt hash (never sent to frontend on register)
+role                String      Student | Teacher | Both
+credits             Number      Earned by helping (default 0)
+reputation          Number      Increases +0.1 per help session (default 5)
+sessionsCompleted   Number      Count of help sessions (default 0)
+createdAt/updatedAt Date        Auto (timestamps: true)
+
+
+--------------------------------------------------------------------------------
+8. DOUBT MODEL (MongoDB — doubts collection)
+--------------------------------------------------------------------------------
+
+WHEN STUDENT ASKS (unresolved):
+  title, subject, topic, description   Required question fields
+  urgency                              High | Medium | Low (default Medium)
+  studentName                          From logged-in user on Ask Doubt
+  resolved                             false (default)
+  language                             May be sent from form (not in schema —
+                                       extra fields are stripped by Mongoose
+                                       unless strict mode allows)
+
+WHEN TEACHER RESOLVES:
+  resolved                             true
+  resolvedAt                           Date of resolution
+  responseType                         text | image | video
+  responseContent                      Text body OR path like images/123.jpg
+  helpType / helpContent               Mirror of response (legacy + compatibility)
+  mentorName                           Name of helper
+  creditsAwarded                       2 (text), 5 (image), or 10 (video)
+
+timestamps: true → createdAt, updatedAt on every document.
+
+
+--------------------------------------------------------------------------------
+9. COMPLETE DOUBT LIFECYCLE (END-TO-END)
+--------------------------------------------------------------------------------
+
+STEP 1 — STUDENT POSTS A DOUBT
+  Page: AskDoubt.jsx
+  Action: Form submit
+  API:    POST /api/doubts
+  Body:   { title, subject, topic, description, urgency, language, studentName }
+  Backend: doubtController.createDoubt → Doubt.create(req.body)
+  Result: New document with resolved=false
+
+STEP 2 — DOUBT APPEARS IN ACTIVE FEED
+  Page: DoubtFeed.jsx (and preview on Dashboard.jsx)
+  API:    GET /api/doubts
+  Backend: Doubt.find({ resolved: false }).sort({ createdAt: -1 })
+  Frontend (Doubt Feed only): sortDoubtsByUrgency()
+    - Order: High → Medium → Low
+    - Within same urgency: newest createdAt first
+  UI: DoubtCard for each doubt (title, subject, urgency, description, studentName)
+
+STEP 3 — TEACHER HELPS (PRIMARY RESOLUTION PATH)
+  Page: DoubtCard.jsx → "Help Student" button → modal
+  Choices: Text (+2 credits) | Image (+5) | Video (+10)
+  API:    POST /api/help/:doubtId
+  Content-Type: multipart/form-data
+  Fields:
+    - helpType, responseType, mentorId, mentorName
+    - textHelp + responseContent (if text)
+    - file (if image or video)
+  Backend: helpRoutes.js
+    - Multer saves file to uploads/images/ or uploads/videos/
+    - Sets responseContent to relative path: images/<filename> or videos/<filename>
+    - Sets resolved=true, resolvedAt=now
+    - Updates mentor User credits, sessionsCompleted, reputation
+  Frontend after success:
+    - refreshDoubts() → doubt disappears from feed (no DELETE)
+    - Updates localStorage loggedInUser with new credits
+
+STEP 4 — ALTERNATIVE: MARK AS RESOLVED (QUICK CLEAR)
+  Page: DoubtCard.jsx → "Mark as Resolved" button
+  API:    PUT /api/doubts/clear/:id
+  Body:   JSON { responseType: "text", responseContent: "Marked as resolved..." }
+  Backend: doubtController.clearDoubt
+    - Sets resolved=true, resolvedAt, response fields
+    - Supports optional file upload via same route + multer
+
+STEP 5 — LEGACY TEXT RESOLVE (handleResolve in DoubtCard — if used)
+  API:    PUT /api/doubts/resolve/:id
+  Body:   { teacherResponse: "..." }
+  Backend: doubtController.resolveDoubt → stores as responseContent
+
+STEP 6 — STUDENT / ANYONE VIEWS RESOLVED ARCHIVE
+  Page: ResolvedDoubts.jsx
+  API:    GET /api/doubts/resolved
+  Backend: Doubt.find({ resolved: true }).sort({ resolvedAt: -1 })
+  UI:
+    - Text: shows responseContent
+    - Image: inline preview + "Open in new tab" link
+    - Video: HTML5 video player + open in new tab
+    - Media URL: http://localhost:5000/uploads/<responseContent>
+    - Shows Asked by (studentName) and Helped by (mentorName) when present
+
+NOTE: Doubts are NEVER hard-deleted. There is no DELETE /api/doubts/:id route.
+Old code that called axios.delete was removed; resolution only flips resolved flag.
+
+
+--------------------------------------------------------------------------------
+10. BACKEND API REFERENCE
+--------------------------------------------------------------------------------
+
+AUTH — /api/auth
+  POST /register     Create user
+  POST /login        Returns { token, user }
+
+DOUBTS — /api/doubts
+  POST /             Create doubt (active)
+  GET /              List active doubts (resolved: false)
+  GET /resolved      List resolved doubts (resolved: true)
+  PUT /clear/:id     Resolve doubt (optional file via multer)
+  PUT /resolve/:id   Resolve with text teacherResponse
+
+HELP — /api/help
+  POST /:id          Help Student (multipart: text/image/video + mentor info)
+
+AI — /api/ai  (backend exists; frontend route removed)
+  POST /ask-ai       OpenAI chat completion (needs OPENAI_API_KEY)
+
+STATIC FILES
+  GET /uploads/*     Serves files from backend/uploads/
+
+
+--------------------------------------------------------------------------------
+11. FILE UPLOAD SYSTEM
+--------------------------------------------------------------------------------
+
+Middleware: backend/middleware/upload.js
+  - Images → backend/uploads/images/<timestamp>.<ext>
+  - Videos → backend/uploads/videos/<timestamp>.<ext>
+  - Rejects other MIME types
+
+Stored in MongoDB as:
+  responseContent: "images/1712345678900.png"
+  (NOT full disk path — relative to uploads folder)
+
+ResolvedDoubts builds URL:
+  http://localhost:5000/uploads/images/1712345678900.png
+
+express.static("uploads") in server.js makes this work.
+
+
+--------------------------------------------------------------------------------
+12. CREDIT AND REPUTATION SYSTEM
+--------------------------------------------------------------------------------
+
+Awarded on Help Student (helpRoutes.js):
+  Text help   → +2 credits
+  Image help  → +5 credits
+  Video help  → +10 credits
+  Every help  → sessionsCompleted +1, reputation +0.1 (capped display to 1 decimal)
+
+Persisted in: users collection (MongoDB)
+Reflected in UI: Navbar credit badge, Dashboard stats, alert after help
+
+Frontend sync: DoubtCard writes updated user back to localStorage after help.
+
+
+--------------------------------------------------------------------------------
+13. ROLE-BASED UX
+--------------------------------------------------------------------------------
+
+Student:
+  - Can use Ask Doubt, Dashboard, Resolved Doubts
+  - Navbar hides Doubt Feed
+
+Teacher:
+  - Can use Doubt Feed, Dashboard, Resolved Doubts
+  - Navbar hides Ask Doubt
+
+Both:
+  - Access to all features per navbar rules (neither link hidden)
+
+Role is chosen at registration and stored in users.role.
+
+
+--------------------------------------------------------------------------------
+14. FRONTEND ↔ BACKEND DATA FLOW DIAGRAM
+--------------------------------------------------------------------------------
+
+                    ┌─────────────────┐
+                    │   React (Vite)  │
+                    │  localhost:5173 │
+                    └────────┬────────┘
+                             │ Axios (JSON / FormData)
+                             ▼
+                    ┌─────────────────┐
+                    │ Express Server  │
+                    │  localhost:5000 │
+                    └────────┬────────┘
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+        /api/auth      /api/doubts     /api/help
+              │              │              │
+              ▼              ▼              ▼
+        ┌─────────────────────────────────────────┐
+        │           MongoDB Atlas                  │
+        │   users          doubts                  │
+        └─────────────────────────────────────────┘
+                             │
+        /uploads ◄───────────┘ (files on disk, paths in doubts.responseContent)
+
+
+--------------------------------------------------------------------------------
+15. KEY FRONTEND COMPONENTS
+--------------------------------------------------------------------------------
+
+Navbar.jsx
+  - Global navigation, logout, role-based links
+
+DoubtCard.jsx
+  - Renders one active doubt
+  - Help Student modal (submitHelp → POST /api/help/:id)
+  - Mark as Resolved (handleClear → PUT /api/doubts/clear/:id)
+  - Shows urgency badge, studentName pill, AI insight box (UI only, no API)
+
+DoubtFeed.jsx
+  - Fetches active doubts, applies urgency sort, maps to DoubtCard
+
+ResolvedDoubts.jsx
+  - Fetches resolved doubts, renders text/image/video solutions
+
+Dashboard.jsx
+  - Shows user credits, sessions, reputation, list of active doubts (no urgency sort)
+
+
+--------------------------------------------------------------------------------
+16. ENVIRONMENT VARIABLES (backend/.env)
+--------------------------------------------------------------------------------
+
+MONGO_URI       Required — MongoDB connection string
+JWT_SECRET      Required for login token signing
+PORT            Optional — default 5000
+OPENAI_API_KEY  Optional — only for /api/ai/ask-ai
+
+
+--------------------------------------------------------------------------------
+17. RESETTING DATABASE
+--------------------------------------------------------------------------------
+
+Safe to delete all documents in users and doubts (or drop collections).
+After wipe:
+  1. Clear browser localStorage (token, loggedInUser)
+  2. Register new accounts
+  3. Post new doubts — they will have correct schema fields
+
+Optional: delete backend/uploads/images and uploads/videos for clean files.
+
+Old doubts missing studentName or responseContent will not auto-fix; only new
+data after code fixes will be complete.
+
+
+--------------------------------------------------------------------------------
+18. KNOWN DESIGN NOTES / LIMITATIONS
+--------------------------------------------------------------------------------
+
+  - API routes are not protected by JWT middleware; security is basic.
+  - AI Assistant page/route removed from UI; backend /api/ai still exists.
+  - Dashboard active list uses API sort only (no urgency reordering).
+  - DoubtCard "AI Learning Insight" is static placeholder text, not live AI.
+  - language field on Ask Doubt may not persist (not in Doubt schema).
+  - Hardcoded API base URL http://localhost:5000 in frontend (not env-based).
+
+
+--------------------------------------------------------------------------------
+19. TYPICAL DEVELOPMENT WORKFLOW
+--------------------------------------------------------------------------------
+
+  1. Start MongoDB Atlas cluster (or local Mongo) — set MONGO_URI
+  2. Start backend: npm run dev
+  3. Start frontend: npm run dev
+  4. Register Teacher + Student accounts
+  5. Login as Student → Ask Doubt
+  6. Login as Teacher → Doubt Feed → Help Student
+  7. View Resolved Doubts → confirm text/image/video and dates
+
+================================================================================
+                              END OF DOCUMENTATION
+================================================================================

@@ -115,13 +115,12 @@ function Navbar() {
               Ask Doubt
             </Link>
           )}
-
           <Link
-            to="/ai"
-            className="px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300"
-          >
-            AI Assistant
-          </Link>
+  to="/resolved"
+  className="px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-300"
+>
+  Resolved Doubts
+</Link>
 
         </div>
 

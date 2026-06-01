@@ -24,14 +24,20 @@ router.post(
       } = req.body;
 
       let helpContent = "";
+      let responseContent = "";
 
       if (helpType === "text") {
 
-        helpContent = textHelp;
+        helpContent = textHelp || req.body.responseContent || "";
+        responseContent = helpContent;
 
-      } else {
+      } else if (req.file) {
 
-        helpContent = req.file.path;
+        const folder =
+          helpType === "image" ? "images" : "videos";
+        const relativePath = `${folder}/${req.file.filename}`;
+        helpContent = relativePath;
+        responseContent = relativePath;
       }
 
       let creditsAwarded = 0;
@@ -58,9 +64,12 @@ router.post(
           {
             helpType,
             helpContent,
+            responseType: helpType,
+            responseContent,
             mentorName,
             creditsAwarded,
-            resolved: true
+            resolved: true,
+            resolvedAt: new Date()
           },
 
           { new: true }

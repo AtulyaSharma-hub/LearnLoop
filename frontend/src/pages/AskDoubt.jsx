@@ -26,6 +26,12 @@ function AskDoubt() {
 
       setLoading(true);
 
+      const loggedInUser = JSON.parse(
+        localStorage.getItem("loggedInUser") || "null"
+      );
+      const studentName =
+        loggedInUser?.name || "Anonymous Student";
+
       const response = await axios.post(
 
         "http://localhost:5000/api/doubts",
@@ -36,7 +42,8 @@ function AskDoubt() {
           topic,
           description,
           urgency,
-          language
+          language,
+          studentName
         }
 
       );
