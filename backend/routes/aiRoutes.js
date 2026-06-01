@@ -1,44 +1,44 @@
-const express = require("express");
-const OpenAI = require("openai");
+// const express = require("express");
+// const OpenAI = require("openai");
 
-const router = express.Router();
+// const router = express.Router();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// const openai = new OpenAI({
+//   apiKey: process.env.OPENAI_API_KEY
+// });
 
-router.post("/ask-ai", async (req, res) => {
+// router.post("/ask-ai", async (req, res) => {
 
-  try {
+//   try {
 
-    const { question } = req.body;
+//     const { question } = req.body;
 
-    const completion =
-      await openai.chat.completions.create({
+//     const completion =
+//       await openai.chat.completions.create({
 
-        model: "gpt-3.5-turbo",
+//         model: "gpt-3.5-turbo",
 
-        messages: [
-          {
-            role: "user",
-            content: question
-          }
-        ]
+//         messages: [
+//           {
+//             role: "user",
+//             content: question
+//           }
+//         ]
 
-      });
+//       });
 
-    res.json({
-      answer:
-        completion.choices[0]
-        .message.content
-    });
+//     res.json({
+//       answer:
+//         completion.choices[0]
+//         .message.content
+//     });
 
-  } catch (error) {
+//   } catch (error) {
 
-    res.status(500).json({
-      message: error.message
-    });
-  }
-});
+//     res.status(500).json({
+//       message: error.message
+//     });
+//   }
+// });
 
-module.exports = router;
+// module.exports = router;

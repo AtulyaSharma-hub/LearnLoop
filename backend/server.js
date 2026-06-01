@@ -29,9 +29,9 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/doubts",
   require("./routes/doubtRoutes")
 );
-app.use("/api/ai",
-  require("./routes/aiRoutes")
-);
+// app.use("/api/ai",
+//   require("./routes/aiRoutes")
+// );
 app.use("/api/help", helpRoutes);
 app.use(
   "/uploads",
